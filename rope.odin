@@ -58,6 +58,21 @@ CreateRope :: proc(value: []$T, parent: ^Rope(T)) -> ^Rope(T) {
 	return parentCopy
 }
 
+CreateRopeFromNodes :: proc(left: ^Rope($T), right: ^Rope(T)) -> ^Rope(T) {
+	parent := new(Rope(T))	
+	parent.parent = nil
+	parent.count = left.count
+	parent.value = nil
+	parent.left = left
+	parent.right = right
+
+	left.parent = parent
+
+	right.parent = parent
+	
+	return parent
+}
+
 DeleteRope :: proc(rope: ^Rope($T)) {
 	if rope.left != nil {
 		DeleteRope(rope.left)
@@ -94,7 +109,57 @@ Concat :: proc(ropeLeft: ^Rope($T), ropeRight: ^Rope(T)) -> ^Rope(T){
 	return rope
 }
 
-Rebalance :: proc(rope: ^Rope($T)) {
+CollectLeaves :: proc(rope: ^Rope($T)) -> []^Rope(T) {
+	stack := make([dynamic]^Rope(T))
+	defer delete(stack)
+	leaves := make([dynamic]^Rope(T))
+
+	append(&stack, rope)
+	for len(stack) > 0 {
+		current := pop(&stack)
+
+		hasLeft := current.left != nil
+		hasRight := current.right != nil
+
+		if !hasLeft && !hasRight {
+			append(&leaves, current)
+		}
+
+		// putting the right side on the stack first means that the
+		// left side will be processed first so that the resulting
+		// list is sorted from left to right
+		if hasRight {
+			append(&stack, current.right)
+		}
+		if hasLeft {
+			append(&stack, current.left)
+		}
+	}
+	return leaves[:]
+}
+
+Balanced :: proc(rope: ^Rope($T)) -> bool {
+	return false
+}
+
+RebalanceLeaves :: proc(leaves: []^Rope($T), start: int, end: int) -> ^Rope(T) {
+	range := end - start
+	if range == 0 {
+		return leaves[start]
+	}
+	if range == 1 {
+		return CreateRopeFromNodes(leaves[start], leaves[end])
+	}
+	return CreateRopeFromNodes(RebalanceLeaves(leaves, start, end / 2), RebalanceLeaves(end / 2 +1, end))
+}
+
+Rebalance :: proc(rope: ^Rope($T)) -> ^Rope(T) {
+	if !Balanced(rope) {
+		leaves := CollectLeaves(rope)
+		return RebalanceLeaves(leaves, 0, len(leaves - 1))
+	} else {
+		return rope
+	}
 	
 }
 

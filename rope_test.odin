@@ -39,3 +39,14 @@ IndexTest :: proc(t: ^testing.T) {
 
 	DeleteRope(rope)
 }
+
+@(test)
+CollectLeavesTest :: proc(t: ^testing.T) {
+	runes: []rune = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'}
+	rope := CreateRope(runes, nil)	
+	leaves := CollectLeaves(rope)
+	testing.expect_value(t, len(leaves), 2)
+
+	delete(leaves)
+	DeleteRope(rope)
+}
