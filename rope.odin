@@ -58,7 +58,7 @@ CreateRope :: proc(value: []$T, parent: ^Rope(T)) -> ^Rope(T) {
 	return parentCopy
 }
 
-CreateRopeFromNodes :: proc(left: ^Rope($T), right: ^Rope(T)) -> ^Rope(T) {
+CreateRopeFromChildren :: proc(left: ^Rope($T), right: ^Rope(T)) -> ^Rope(T) {
 	parent := new(Rope(T))	
 	parent.parent = nil
 	parent.count = left.count
@@ -148,23 +148,35 @@ RebalanceLeaves :: proc(leaves: []^Rope($T), start: int, end: int) -> ^Rope(T) {
 		return leaves[start]
 	}
 	if range == 1 {
-		return CreateRopeFromNodes(leaves[start], leaves[end])
+		return CreateRopeFromChildren(leaves[start], leaves[end])
 	}
-	return CreateRopeFromNodes(RebalanceLeaves(leaves, start, end / 2), RebalanceLeaves(end / 2 +1, end))
+	return CreateRopeFromChildren(RebalanceLeaves(leaves, start, end / 2), RebalanceLeaves(leaves, end / 2 +1, end))
 }
 
 Rebalance :: proc(rope: ^Rope($T)) -> ^Rope(T) {
 	if !Balanced(rope) {
 		leaves := CollectLeaves(rope)
-		return RebalanceLeaves(leaves, 0, len(leaves - 1))
+		return RebalanceLeaves(leaves, 0, len(leaves) - 1)
 	} else {
 		return rope
 	}
 	
 }
 
-Insert :: proc(rope: ^Rope($T), index: int) {
+Split :: proc (rope: ^Rope($T), index: int) -> [2]^Rope(T) {
+	if index < rope.count {
+		split := Split(rope.left, index)
+		return [2]^Rope(T){Rebalance(split[0]), Rebalance(CreateRopeFromChildren(split[1], rope.right))}
+	} else if index > rope.count {
+		split := Split(rope.right, index - rope.count)
+		return [2]^Rope(T){Rebalance(CreateRopeFromChildren(rope.left, split[0])), Rebalance(split[1])}
+	} else {
+		return [2]^Rope(T){rope.left, rope.right}
+	}
+}
 
+Insert :: proc(rope: ^Rope($T), index: int) {
+	
 }
 
 Append :: proc(rope: ^Rope($T)) {

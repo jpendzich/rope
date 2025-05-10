@@ -50,3 +50,16 @@ CollectLeavesTest :: proc(t: ^testing.T) {
 	delete(leaves)
 	DeleteRope(rope)
 }
+
+@(test)
+SplitTest :: proc(t: ^testing.T) {
+	runes: []rune = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'}
+	rope := CreateRope(runes, nil)	
+
+	split := Split(rope, 2)
+	log.log(.Info, split[0])
+	log.log(.Info, split[1])
+	testing.expect_value(t, len(split), 2)
+
+	DeleteRope(rope)
+}
